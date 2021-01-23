@@ -198,6 +198,45 @@ func TestSqrt(t *testing.T) {
 	}
 }
 
+func TestEvaluate(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		name        string
+		a           string
+		want        float64
+		errExpected bool
+	}
+
+	testCases := []testCase{
+		{name: "No spaces, addition",
+			a: "1+2", want: 3, errExpected: false},
+		{name: "Space between first operand and operator",
+			a: "1 /2", want: 0.5, errExpected: false},
+		{name: "Space between second operand and operator",
+			a: "1* 2", want: 2, errExpected: false},
+		{name: "Spaces between operator and both operands",
+			a: "1 -  2", want: -1, errExpected: false},
+		{name: "Test with float values",
+			a: "1.1  *  2.2", want: 2.42, errExpected: false},
+		{name: "Test with bad operator, expect error",
+			a: "1.1  !  2.2", want: 0, errExpected: true},
+	}
+
+	for _, tc := range testCases {
+		got, err := calculator.Evaluate(tc.a)
+
+		errReceived := err != nil
+		if tc.errExpected != errReceived {
+			t.Fatalf("Evaluate(%s): unexpected error status: %v", tc.a, errReceived)
+		}
+
+		if !tc.errExpected && !closeEnough(tc.want, got, 0.000001) {
+			t.Errorf("%s: want: %f, got: %f", tc.name, tc.want, got)
+		}
+	}
+}
+
 func closeEnough(a, b, tolerance float64) bool {
 	return math.Abs(a-b) <= tolerance
 }
