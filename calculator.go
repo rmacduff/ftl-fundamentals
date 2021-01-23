@@ -4,6 +4,8 @@ package calculator
 import (
 	"fmt"
 	"math"
+	"regexp"
+	"strconv"
 )
 
 // Add takes at least two numbers and returns the result of adding them together.
@@ -53,4 +55,43 @@ func Sqrt(a float64) (float64, error) {
 		return 0, fmt.Errorf("bad input: %f (cannot take square root of negative number)", a)
 	}
 	return math.Sqrt(a), nil
+}
+
+// Takes an expression as a string, evaluates it and returns the result
+func Evaluate(expr string) (float64, error) {
+	e := `\s*(?P<operand1>\d+(\.\d+)*)\s*(?P<operator>[\+-\\*])\s*(?P<operand2>\d+(\.\d+)*)\s*`
+	r := regexp.MustCompile(e)
+	expNames := r.SubexpNames()
+
+	result := r.FindAllStringSubmatch(expr, -1)
+	if result == nil {
+		return 0, fmt.Errorf("could not parse expression: %s", expr)
+	}
+	m := map[string]string{}
+	for i, n := range result[0] {
+		m[expNames[i]] = n
+	}
+
+	operand1, err := strconv.ParseFloat(m["operand1"], 64)
+	if err != nil {
+		return 0, err
+	}
+	operand2, err := strconv.ParseFloat(m["operand2"], 64)
+	if err != nil {
+		return 0, err
+	}
+
+	switch operator := m["operator"]; operator {
+	case "+":
+		return Add(operand1, operand2), nil
+	case "-":
+		return Subtract(operand1, operand2), nil
+	case "*":
+		return Multiply(operand1, operand2), nil
+	case "/":
+		return Divide(operand1, operand2)
+	default:
+		return 0, fmt.Errorf("unrecognized operator: %s", operator)
+	}
+
 }
